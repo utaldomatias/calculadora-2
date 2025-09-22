@@ -1,0 +1,124 @@
+INSTRUÇÕES DE USO - SISTEMA DE RESUMO DE RESERVAS AWS
+
+=================================================================
+
+VISÃO GERAL
+-----------
+Este sistema processa arquivos CSV exportados da Calculadora AWS para gerar resumos formatados de custos de reservas (Savings Plans). O script automatiza o cálculo de custos upfront, impostos e conversão para BRL.
+
+LIMITAÇÕES IMPORTANTES
+----------------------
+⚠️  ATENÇÃO: Para serviços ECS e Lambda, o script funciona APENAS nas seguintes regiões:
+   • São Paulo (sa-east-1)
+   • N. Virginia (us-east-1)
+   • Ohio (us-east-2)
+   • Canada Central (ca-central-1)
+   • Oregon (us-west-2)
+
+PRÉ-REQUISITOS
+--------------
+1. Arquivo CSV exportado da Calculadora AWS
+2. O CSV deve conter OBRIGATORIAMENTE apenas os serviços e instâncias que o cliente escolheu para reserva
+3. Formato de arquivo: .CSV (obrigatório para funcionamento)
+
+COMO PREPARAR A CALCULADORA AWS
+-------------------------------
+1. Acesse a Calculadora AWS (https://calculator.aws)
+2. Configure APENAS os serviços que terão reservas escolhida pelo cliente:
+   - EC2 (instâncias reservadas)
+   - RDS/Aurora (instâncias reservadas)
+   - ElastiCache (instâncias reservadas)
+   - Lambda (Savings Plans)
+   - ECS/Fargate (Savings Plans)
+3. Para cada serviço, configure:
+   - Tipo de instância desejado
+   - Quantidade necessária
+   - Opção de pagamento (All Upfront, No Upfront, etc.)
+   - Período da reserva (1 ou 3 anos)
+4. Exporte o resultado em formato CSV
+
+COMO USAR O SISTEMA
+-------------------
+1. Execute o comando: streamlit run app.py (para rodar localmente caso tenha o script instalado em sua máquina)
+2. Faça upload do arquivo CSV exportado da Calculadora AWS
+3. Ajuste a taxa de câmbio USD/BRL se necessário (padrão: 5.50)
+4. O sistema processará automaticamente:
+   - Custos upfront e mensais
+   - Cálculo de impostos (13,83%)
+   - Conversão para BRL
+   - Geração do resumo formatado
+5. Visualize o resumo na tela
+6. Faça download do arquivo de resumo em formato texto
+
+ESTRUTURA DO CSV NECESSÁRIA
+---------------------------
+O arquivo CSV deve conter as seguintes colunas:
+- Hierarquia de grupos
+- Região
+- Serviço
+- Pagamento adiantado
+- Mensal
+- Resumo da configuração
+
+COMO FUNCIONA O RESUMO
+----------------------
+O sistema analisa cada linha do CSV e:
+
+1. IDENTIFICA O CLIENTE:
+   - Extrai nome e ID da conta da coluna "Hierarquia de grupos"
+
+2. PROCESSA CADA SERVIÇO:
+   - EC2: Extrai tipo de instância, quantidade, sistema operacional
+   - RDS/Aurora: Identifica tipo, número de nós, configuração AZ
+   - ElastiCache: Detecta tipo de cache, número de nós, engine
+   - Lambda: Calcula custos baseado na região (limitado às 5 regiões)
+   - ECS/Fargate: Processa arquitetura e sistema operacional
+
+3. CALCULA CUSTOS:
+   - All Upfront: Usa valor da coluna "Pagamento adiantado"
+   - No Upfront: Usa valor da coluna "Mensal" × 12 meses
+   - Partial Upfront: Soma upfront + (mensal × 12)
+
+4. APLICA IMPOSTOS:
+   - Adiciona 13,83% sobre todos os valores
+
+5. CONVERTE PARA BRL:
+   - Multiplica pela taxa de câmbio configurada
+
+6. GERA RESUMO:
+   - Agrupa por região e serviço
+   - Calcula totais por categoria
+   - Formata saída legível
+
+TIPOS DE PAGAMENTO SUPORTADOS
+-----------------------------
+- All Upfront (pagamento integral antecipado)
+- No Upfront (pagamento mensal)
+- Heavy Utilization (para ElastiCache cache.t2.micro)
+
+EXEMPLO DE FLUXO COMPLETO
+-------------------------
+1. Cliente define necessidades de reservas
+2. Configurar apenas esses serviços na Calculadora AWS
+3. Exportar CSV da calculadora
+4. Fazer upload no sistema de resumo
+5. Ajustar taxa de câmbio se necessário
+6. Gerar e baixar resumo formatado
+7. Apresentar resumo ao cliente
+
+SOLUÇÃO DE PROBLEMAS
+--------------------
+- Erro de formato: Verificar se o arquivo é .CSV
+- Serviços não processados: Confirmar se estão nas regiões suportadas 
+- Valores incorretos: Verificar configuração na Calculadora AWS
+- Colunas ausentes: Verificar estrutura do CSV exportado
+
+SUPORTE
+-------
+Em caso de dúvidas ou problemas, entre em contato com o time de suporte.
+
+=================================================================
+
+IMPORTANTE: Este sistema foi desenvolvido especificamente para processar 
+reservas AWS e requer que o CSV contenha APENAS os serviços que terão 
+reservas contratadas.
